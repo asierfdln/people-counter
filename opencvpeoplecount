@@ -1,0 +1,183 @@
+TESIS:
+
+	- Resumen: realiza un reconocimiento cenital de personas, simplemente las detecta, no lleva un control de las personas que "entran y salen". El dataset está realizado por él mismo (por lo que deberíamos conseguir un dataset externo o hacer muchísimas fotos de todas las posibilidades). En la tesis se aportan partes de código ya hechas pero faltan los datasets, modelos, etc. Prueba diferentes métodos para reconocer, los prueba todos en una CPU, ¿podrá funcionar en la Jetson?
+
+	- .c: backgroundCascade.c, backgroundSVM.c, imageCropped.c, testCascade.c, testSVM.c, trainSVM.c (están hechos con copy paste del código de la tesis, hay que revisar que esté bien)
+
+	- Aporta los resultados de sus experimentos, el dataset que prueba es bastante "peqeuño".
+
+	- Para probarlo habría que hacer un .h y unir todo, ¿funciona solo con lo que el aporta o faltan cosas?
+
+	- Aporta bibliografía: 
+
+	[1] C. T. a. Q.Chen, “Zenithal people counting using histogram of oriented 	 gradients,”
+	Image and Singal Processing (CISP), 2012 5th International Congress on Chongquing,
+	pp. 946-951, 2012.
+	[2] C. C. &. V. Vapnik, “SUPPORT-VECTOR NETWORKS,” AT&T Labs-Research, vol.
+	20, no. 3, pp. 273-297, 1995.
+	[3] M. B. a. J. C. Rui Hu, “Gradient Field Descriptor For Sketch Based Retrieval And
+	Localization,” Centre for Vision, Speech and Signal Processing, 2010.
+	[4] D. G. Lowe, “Distinctive Image Features from Scale-Invariant Keypoints,” International
+	Journal of Computer Vision, 2005.
+	[5] C. Burges, “A Tutorial on Support Vector Machines for Pattern,” Knowledge Discovery
+	and Data Mining, vol. 2, no. 2, pp. 1-43, 1998.
+	[6] P. V. &. M. Jones, “Rapid Object Detection using a Boosted Cascade of Simple,”
+	Conference on Computer Vision and Pattern Recognition (CVPR), pp. 511-518, 2001.
+	[7] Y. F. a. R. E. Schapire, “A short introduction to Boosting,” Journal of Japanese Society
+	for Artificial Intelligence, vol. 4, no. 15, pp. 771-780, 1999.
+	[8] X. Z. Z. L. L. Z. a. S. Z. L. Shengcai Liao, “Learning Multi-scale Block Local Binary
+	Patterns for Face Recognition,” International Conference on Biometrics (ICB), pp. 828-
+	837, 2007.
+	[9] P. K. a. R. Bowden, “An Improved Adaptive Background Mixture Model for Realtime,”
+	In Proc. 2nd European Workshop on Advanced Video Based Surveillance Systems,
+	2001. 
+	[10] S. a. A. K. Suzuki, “Topological Structural Analysis of Digitized Binary Images by
+	Border Following.,” CVGIP, vol. 30, no. 1, pp. 32-46, 1985.
+	[11] Anónimo, “OpenCV documentation,” [Online]. Available:
+	http://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html.
+	[Accessed 4 2016].
+	[12] Anonimo, “OpenCV documentation,” [Online]. Available: http://docs.opencv.org/.
+	[13] G. B. a. A. Kaehler, OpenCV: Computer vision with the OpenCV library, O`Reilly, 2008.
+	[14] Anonimo, The OpenCV reference manual, Release 2.4.9.0, 2014.
+	[15] S. Brahmbhatt, Practical OpenCV (technology in action), 2013.
+	[16] “draw.io,” JGraph LTD, 2005. [Online]. Available: draw.io. [Accessed junio 2016].
+
+
+FOOTFALL:
+
+	- Resumen: Raspberry Pi + Pi Cam -> Debería funcionar bien en la Jetson Nano
+
+	- Github: https://github.com/WatershedArts/Footfall
+
+	- Blog: https://blogs.wcode.org/2015/04/footfall-a-camera-based-people-counting-system-for-under-60/
+
+	- 2 programas principales:
+		
+		1. Openframework C++ en la raspeberry:
+			
+			a. Captura imágenes desde la cámara
+			b. Las pasa por algoritmos de OpenCV
+			c. Compila y trackea los movimientos
+			d. Si conicide comienza un evento en el servidos de Footfall
+
+		2. Servidor: usa PHP, MySQL, JavaScript, ChartJs library (HTML5)
+			
+			a. Coge información de la BBDD (MySQL, PHP, JavaScript)
+			b. Genera charts (JavaScript)
+			c. Muestra charts (JavaScript)
+			d. Actualiza charts (PHP, JavaScript)
+
+
+DEEP SORT:
+
+Deep SORT
+
+	- Blog: https://towardsdatascience.com/people-tracking-using-deep-learning-5c90d43774be
+
+	- GitHub: https://github.com/nwojke/deep_sort
+
+	- Deep SORT: Simple Online and Realtime Tracking with a Deep Association Metric.
+
+	- Compatible con Python 2.7 y 3, necesita: NumPy, sklearn, OpenCV
+
+
+	- Links de interés: 
+
+		
+		1. Simple Online and Realtime Tracking with a Deep Association Metric: https://arxiv.org/abs/1703.07402
+
+		2. Object Tracking Benchmark (datasets): https://motchallenge.net/
+
+		3. Kalman filter (para mejorar centroid/ids): https://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
+
+		4. Deep Learning Analyitics: https://deeplearninganalytics.org/
+
+		5. Publicaciones en Medium de la chica: https://medium.com/@priya.dwivedi
+
+		6. TensorFlow Object Detection: https://github.com/tensorflow/models/tree/master/research/object_detection
+
+
+
+PYIMAGESEARCH:
+
+	- Resumen: Tracking y Object Detection, cuenta el número de personas que cruzan cierto punto, contea las que van hacia arriba y las que van hacia abajo.
+
+	- Vídeo muy trabado, incluso se para a veces y parece que va a petar
+
+	- CPU1: 99%, CPU2: 98%, CPU3: 99%, CPU4: 99%
+
+	- Sin problemas de memoria al tener la Swap (aparentemente porque no se llega a ver todo el proceso del programa)
+
+	- Hay dos vídeos de prueba, para probar el programa hacer lo siguiente:
+		1. cd Desktop/people-counting-opencv
+		
+		2.Prueba 1: python3 people_counter.py --prototxt mobilenet_ssd/MobileNetSSD_deploy.prototxt --model mobilenet_ssd/MobileNetSSD_deploy.caffemodel --input videos/example_01.mp4 --output output/output_01.avi
+		  
+		  Prueba 2: python3 people_counter.py --prototxt mobilenet_ssd/MobileNetSSD_deploy.prototxt --model mobilenet_ssd/MobileNetSSD_deploy.caffemodel --input videos/example_01.mp4 --output output/output_02.avi  
+
+	- Tal vez probándolo en una CPU normal funcione porque estamos con el mismo problema que otras veces, estamos usando opencv, etc. pero no estamos apovechando la GPU de la Jetson, seguramente en un PC vaya bien pero en la Jetson imposible.
+
+
+	- Links: 
+		1. Hilo principal: https://www.pyimagesearch.com/2018/08/13/opencv-people-counter/
+
+		2. OpenCV Object Tracking: https://www.pyimagesearch.com/2018/07/30/opencv-object-tracking/
+
+		3. Simple Object Tracking with OpenCV: https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
+
+		4. Object Detection with Deep Learning and OpenCV: https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/
+
+
+
+
+- Links para revisar:
+
+	1. Ideas reconocimiento en movimiento: 
+		a. https://www.youtube.com/watch?v=kXd6E3EDB_4
+		b. https://www.youtube.com/watch?v=SmpCUnPm770
+	
+	2. Pendiente: 
+		a. https://upcommons.upc.edu/bitstream/handle/2117/106682/eduardo.bernal_117878.pdf?sequence=1&isAllowed=y
+		b. https://archive.ics.uci.edu/ml/index.phphttps://www.pyimagesearch.com/2018/08/13/opencv-people-counter/
+		c. https://github.com/bendidi/Tracking-with-darkflow
+		d. https://www.byu.io/2017/12/07/counting-people-with-ml.html 
+		e. https://towardsdatascience.com/people-tracking-using-deep-learning-5c90d43774be
+		f. https://github.com/topics/people-counter
+
+	3. Datasets: 
+		a. https://archive.ics.uci.edu/ml/index.php
+		b. https://motchallenge.net/ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+ 
+
+	
