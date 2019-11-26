@@ -13,11 +13,8 @@
 
 # python3 people_counter_reworked.py --prototxt mobilenet_ssd/MobileNetSSD_deploy.prototxt --model mobilenet_ssd/MobileNetSSD_deploy.caffemodel --output output/webcam_output.avi
 
-# import the necessary packages
 from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
-# from imutils.video import VideoStream
-# from imutils.video import FPS
 import numpy as np
 import argparse
 import imutils
