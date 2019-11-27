@@ -75,7 +75,10 @@ def main():
             # RESTO DE LÓGICA DEL PROGRAMILLA
 
         # esperamos a una 'q' de teclado para salir del bisho este
-        key = cv2.waitKey(1) & 0xFF # (no te voy a mentir, no he mirado qué hace esto porque me da mucho miedito...)
+        key = cv2.waitKey(1) & 0xFF # La función waitKey devuelve - 1 cuando no se realiza ninguna entrada. Tan pronto como ocurre el evento es decir. Se presiona un botón devuelve un entero de 32 bits.
+                                    #El 0xFF en este escenario representa binario 11111111 a 8 bit binary, ya que solo necesitamos 8 bits para representar un carácter que AND Y waitKey(0) a 0xFF. Como resultado, se obtiene un número entero por debajo de 255.
+                                    #ord(char) devuelve el valor ASCII del carácter que nuevamente sería máximo 255.
+                                    #Por lo tanto, al comparar el entero con el valor de ord(char), podemos verificar si hay un evento de tecla presionada y romper el ciclo.
         if key == ord("q"):
             break
 
