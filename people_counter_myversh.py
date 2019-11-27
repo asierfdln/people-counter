@@ -26,9 +26,6 @@ def main():
     parser.add_argument("-l", "--labels", default="pednet/class_labels.txt", help="path to class labels")
     parser.add_argument("-c", "--confidence", type=float, default=0.7, help="minimum probability to filter weak detections")
     parser.add_argument("-o", "--output", type=str, help="path to optional output video file")
-
-    # TODO debería haber moar resols?? tipo de salida de ventana y tal... lo cual me lleva a pensar tb que el 
-    # get_jetson_gstreamer_source() debería cambiarse según parámetros de consola como de toda la vida de dios se ha hecho...
     parser.add_argument("-x", "--width", type=int, default=1280, help="capture width (default 1280)")
     parser.add_argument("-y", "--height", type=int, default=720, help="capture height (default 720)")
     args = vars(parser.parse_args())
@@ -56,7 +53,7 @@ def main():
     print("[INFO] starting video stream...")
     # inisiamos la camara (TODO creo que el doorbell hacía cosas chachis de detectar en qué plataforma 
     # se estaba ejecutando el tinglao para ver si era la jetson o un pc a secas o qué, sería interesante poner eso tb...)
-    capture = cv2.VideoCapture(get_jetson_gstreamer_source(), cv2.CAP_GSTREAMER)
+    capture = cv2.VideoCapture(get_jetson_gstreamer_source(capture_width=args["width"], capture_height=args["height"]), cv2.CAP_GSTREAMER)
 
     # aquí después del "capture" el people_counter OG hace un time.sleep(2.0) que me da muy mala espina, como que sobra un 
     # poco... TODO probar si de verdad importa o q...
