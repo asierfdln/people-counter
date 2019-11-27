@@ -69,7 +69,7 @@ def main():
         ret, frame = capture.read()
 
         if ret:  # si hay frame pillao pues lo muestras
-            cv2.imshow("Wusup", frame)
+            cv2.imshow("People Counter", frame)
 
             # RESTO DE LÓGICA DEL PROGRAMILLA
 
