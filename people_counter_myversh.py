@@ -32,9 +32,8 @@ def main():
     parser.add_argument("-dh", "--dispheight", type=int, default=720, help="display height (default 720)")
     args = vars(parser.parse_args())
 
-    # estos dos parámetros de W y H deberían ir en concordancia con lo puesto en el gstreamer() de arriba
-    CW = args["width"] # anchura de (de qué?? de lo que pilla la imagen, tipo la resolucion de la imagen o la de la ventana que vamos a mostrar)
-    CH = args["height"] # altura de (~)
+    CW = args["capwidth"]
+    CH = args["capheight"]
     DW = args["dispwidth"]
     DH = args["dispheight"]
 
@@ -72,6 +71,7 @@ def main():
             cv2.imshow("People Counter", frame)
 
             # RESTO DE LÓGICA DEL PROGRAMILLA
+            # TODO conteo de FPS en la propia ventana...
 
         # esperamos a una 'q' de teclado para salir del bisho este
         key = cv2.waitKey(1) & 0xFF # La función waitKey devuelve - 1 cuando no se realiza ninguna entrada. Tan pronto como ocurre el evento es decir. Se presiona un botón devuelve un entero de 32 bits.
