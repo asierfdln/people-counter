@@ -6,10 +6,9 @@ import cv2
 # no sé de dónde hemos sacado esto, pero lo utiliza todo peter para sacar el recurso famoso este del gstreamer de la 
 # jetson (hay que decir tb que me suena haberlo visto en algun foro de estos en los que el bueno de dusty-nv contestaba 
 # cosas pero no estoy muy seguro...)
+
+# Return an OpenCV-compatible video source description that uses gstreamer to capture video from the camera on a Jetson Nano
 def get_jetson_gstreamer_source(capture_width=1280, capture_height=720, display_width=1280, display_height=720, framerate=30, flip_method=2):
-    """
-    Return an OpenCV-compatible video source description that uses gstreamer to capture video from the camera on a Jetson Nano
-    """
     return (
         f'nvarguscamerasrc ! video/x-raw(memory:NVMM), ' +
         f'width=(int){capture_width}, height=(int){capture_height}, ' +
@@ -70,7 +69,7 @@ def main():
         ret, frame = capture.read()
 
         if ret:  # si hay frame pillao pues lo muestras
-            cv2.imshow("Wusup", frame)
+            cv2.imshow("People Counter", frame)
 
             # RESTO DE LÓGICA DEL PROGRAMILLA
 
