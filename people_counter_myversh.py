@@ -8,7 +8,7 @@ import cv2
 # cosas pero no estoy muy seguro...)
 
 # Return an OpenCV-compatible video source description that uses gstreamer to capture video from the camera on a Jetson Nano
-def get_jetson_gstreamer_source(capture_width=1280, capture_height=720, display_width=1280, display_height=720, framerate=30, flip_method=2):
+def gstreamer(capture_width=1280, capture_height=720, display_width=1280, display_height=720, framerate=30, flip_method=2):
     return (
         f'nvarguscamerasrc ! video/x-raw(memory:NVMM), ' +
         f'width=(int){capture_width}, height=(int){capture_height}, ' +
@@ -26,13 +26,17 @@ def main():
     parser.add_argument("-l", "--labels", default="pednet/class_labels.txt", help="path to class labels")
     parser.add_argument("-c", "--confidence", type=float, default=0.7, help="minimum probability to filter weak detections")
     parser.add_argument("-o", "--output", type=str, help="path to optional output video file")
-    parser.add_argument("-x", "--width", type=int, default=1280, help="capture width (default 1280)")
-    parser.add_argument("-y", "--height", type=int, default=720, help="capture height (default 720)")
+    parser.add_argument("-cw", "--capwidth", type=int, default=1280, help="capture width (default 1280)")
+    parser.add_argument("-ch", "--capheight", type=int, default=720, help="capture height (default 720)")
+    parser.add_argument("-dw", "--dispwidth", type=int, default=1280, help="display width (default 1280)")
+    parser.add_argument("-dh", "--dispheight", type=int, default=720, help="display height (default 720)")
     args = vars(parser.parse_args())
 
-    # estos dos parámetros de W y H deberían ir en concordancia con lo puesto en el get_jetson_gstreamer_source() de arriba
-    W = args["width"] # anchura de (de qué?? de lo que pilla la imagen, tipo la resolucion de la imagen o la de la ventana que vamos a mostrar)
-    H = args["height"] # altura de (~)
+    # estos dos parámetros de W y H deberían ir en concordancia con lo puesto en el gstreamer() de arriba
+    CW = args["width"] # anchura de (de qué?? de lo que pilla la imagen, tipo la resolucion de la imagen o la de la ventana que vamos a mostrar)
+    CH = args["height"] # altura de (~)
+    DW = args["dispwidth"]
+    DH = args["dispheight"]
 
     print("[INFO] loading classes...")
     CLASSES = [] # lista (un array de toalavida) en la que van a estar todas las clases que puede detectar el modelo
@@ -53,10 +57,7 @@ def main():
     print("[INFO] starting video stream...")
     # inisiamos la camara (TODO creo que el doorbell hacía cosas chachis de detectar en qué plataforma 
     # se estaba ejecutando el tinglao para ver si era la jetson o un pc a secas o qué, sería interesante poner eso tb...)
-    capture = cv2.VideoCapture(
-        get_jetson_gstreamer_source(capture_width=args["width"], capture_height=args["height"],
-                                    display_width=args["width"], display_height=args["height"]),
-        cv2.CAP_GSTREAMER)
+    capture = cv2.VideoCapture(gstreamer(capture_width=CW, capture_height=CH, display_width=DW, display_height=DH), cv2.CAP_GSTREAMER)
 
     # aquí después del "capture" el people_counter OG hace un time.sleep(2.0) que me da muy mala espina, como que sobra un 
     # poco... TODO probar si de verdad importa o q...
@@ -77,7 +78,7 @@ def main():
                                     # El 0xFF en este escenario representa binario 11111111 a 8 bit binary, ya que solo necesitamos 8 bits para representar un carácter que AND Y waitKey(0) a 0xFF. Como resultado, se obtiene un número entero por debajo de 255.
                                     # ord(char) devuelve el valor ASCII del carácter que nuevamente sería máximo 255.
                                     # Por lo tanto, al comparar el entero con el valor de ord(char), podemos verificar si hay un evento de tecla presionada y romper el ciclo.
-        if key == ord("q"):
+        if key == ord("q") or key == ord("Q"):
             break
 
     capture.release()
