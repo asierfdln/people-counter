@@ -53,7 +53,10 @@ def main():
     print("[INFO] starting video stream...")
     # inisiamos la camara (TODO creo que el doorbell hacía cosas chachis de detectar en qué plataforma 
     # se estaba ejecutando el tinglao para ver si era la jetson o un pc a secas o qué, sería interesante poner eso tb...)
-    capture = cv2.VideoCapture(get_jetson_gstreamer_source(capture_width=args["width"], capture_height=args["height"]), cv2.CAP_GSTREAMER)
+    capture = cv2.VideoCapture(
+        get_jetson_gstreamer_source(capture_width=args["width"], capture_height=args["height"],
+                                    display_width=args["width"], display_height=args["height"]),
+        cv2.CAP_GSTREAMER)
 
     # aquí después del "capture" el people_counter OG hace un time.sleep(2.0) que me da muy mala espina, como que sobra un 
     # poco... TODO probar si de verdad importa o q...
