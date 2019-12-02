@@ -73,6 +73,28 @@ def main():
             # RESTO DE LÓGICA DEL PROGRAMILLA
             # TODO conteo de FPS en la propia ventana...
 
+
+            # El cambio este de cvtColores necesario por cómo maneja opencv bytes de imágenes REFERIDO A 
+            # LA FUNC imread(), no veo nada de la func VideoCapture.read()... Porque el vídeo se ve 
+            # "normal" y no invertido... ¿Hicimos pruebas viendo a ver si reconocía cosas sin hacer lo de rgb? TODO...
+
+            # https://note.nkmk.me/en/python-opencv-bgr-rgb-cvtcolor/
+            # https://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html#cvtcolor
+
+            """
+            Note that the default color format in OpenCV is often referred to as RGB but it is actually BGR 
+            (the bytes are reversed). So the first byte in a standard (24-bit) color image will be an 8-bit 
+            Blue component, the second byte will be Green, and the third byte will be Red. The fourth, fifth, 
+            and sixth bytes would then be the second pixel (Blue, then Green, then Red), and so on.
+            """
+
+            # frame_in_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # Haciendo lectura de este bloque de wtfismo...
+            blob = cv2.dnn.blobFromImage(frame, 0.007843, (W, H), 127.5)
+            net.setInput(blob)
+            detections = net.forward()
+
         # esperamos a una 'q' de teclado para salir del bisho este
         key = cv2.waitKey(1) & 0xFF # La función waitKey devuelve - 1 cuando no se realiza ninguna entrada. Tan pronto como ocurre el evento es decir. Se presiona un botón devuelve un entero de 32 bits.
                                     # El 0xFF en este escenario representa binario 11111111 a 8 bit binary, ya que solo necesitamos 8 bits para representar un carácter que AND Y waitKey(0) a 0xFF. Como resultado, se obtiene un número entero por debajo de 255.
