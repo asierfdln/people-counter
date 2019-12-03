@@ -80,7 +80,7 @@ def main():
         with open(args["labels"]) as f:
             CLASSES = f.readlines()
         
-        CLASSES = [line.strip() for line in MY_CLASSES]
+        CLASSES = [line.strip() for line in CLASSES]
 
     # print(MY_CLASSES)
 
