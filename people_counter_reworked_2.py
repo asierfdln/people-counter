@@ -41,11 +41,17 @@ def get_jetson_gstreamer_source(capture_width=1280, capture_height=720, display_
 def main():
     # construct the argument parse and parse the arguments
     ap = argparse.ArgumentParser()
-    ap.add_argument("-p", "--prototxt", default="mobilenet_ssd/MobileNetSSD_deploy.prototxt",
+
+    index_default = 0
+    prototxt_default = ["mobilenet_ssd/MobileNetSSD_deploy.prototxt", "pednet/deploy.prototxt"]
+    caffe_default = ["mobilenet_ssd/MobileNetSSD_deploy.caffemodel", "pednet/snapshot_iter_70800.caffemodel"]
+    labels_default = ["mobilenet_ssd/MobileNetSSD_deploy_labels.txt", "pednet/class_labels.txt"]
+
+    ap.add_argument("-p", "--prototxt", default=prototxt_default[index_default],
                     help="path to Caffe 'deploy' prototxt file")
-    ap.add_argument("-m", "--model", default="mobilenet_ssd/MobileNetSSD_deploy.caffemodel",
+    ap.add_argument("-m", "--model", default=caffe_default[index_default],
                     help="path to Caffe pre-trained model")
-    ap.add_argument("-l", "--labels", default="mobilenet_ssd/MobileNetSSD_deploy_labels.txt",
+    ap.add_argument("-l", "--labels", default=labels_default[index_default],
                     help="path to Caffe class labels")
     ap.add_argument("-i", "--input", type=str,
         help="path to optional input video file")
@@ -59,16 +65,22 @@ def main():
 
     # initialize the list of class labels MobileNet SSD was trained to
     # detect
-    CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
+    # CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
+    #     "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+    #     "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+    #     "sofa", "train", "tvmonitor"]
+
+    CLASSES = []
+    if index_default == 0:
+        CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
         "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
         "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
         "sofa", "train", "tvmonitor"]
-
-    MY_CLASSES = []
-    with open(args["labels"]) as f:
-        MY_CLASSES = f.readlines()
-    
-    MY_CLASSES = [line.strip() for line in MY_CLASSES]
+    else:
+        with open(args["labels"]) as f:
+            CLASSES = f.readlines()
+        
+        CLASSES = [line.strip() for line in MY_CLASSES]
 
     # print(MY_CLASSES)
 
