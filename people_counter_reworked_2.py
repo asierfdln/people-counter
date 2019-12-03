@@ -79,10 +79,7 @@ def main():
     else:
         with open(args["labels"]) as f:
             CLASSES = f.readlines()
-        
         CLASSES = [line.strip() for line in CLASSES]
-
-    # print(MY_CLASSES)
 
     # load our serialized model from disk
     print("[INFO] loading model...")
@@ -171,6 +168,7 @@ def main():
             blob = cv2.dnn.blobFromImage(frame, 0.007843, (W, H), 127.5)
             net.setInput(blob)
             detections = net.forward()
+            print(CLASSES)
 
             # loop over the detections
             for i in np.arange(0, detections.shape[2]):
