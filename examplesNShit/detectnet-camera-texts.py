@@ -68,9 +68,6 @@ while display.IsOpen():
 			5, ypos, font.White, font.Gray40)
 		ypos = ypos + INCR
 
-	# font.OverlayText(img, width, height, "hola", 5, 100, font.Purple, font.Gray90)
-	# font.OverlayText(img, width, height, "hola", 5, 135, font.Yellow, font.Gray30)
-
 	# render the image
 	display.RenderOnce(img, width, height)
 

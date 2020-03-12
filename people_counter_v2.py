@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 import cv2
 
+import jetson.utils
 
 # no sé de dónde hemos sacado esto, pero lo utiliza todo peter para sacar el recurso famoso este del gstreamer de la 
 # jetson (hay que decir tb que me suena haberlo visto en algun foro de estos en los que el bueno de dusty-nv contestaba 
@@ -91,7 +92,7 @@ def main():
             # frame_in_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # Haciendo lectura de este bloque de wtfismo...
-            blob = cv2.dnn.blobFromImage(frame, 0.007843, (W, H), 127.5)
+            blob = cv2.dnn.blobFromImage(frame, 0.007843, (CW, CH), 127.5)
             net.setInput(blob)
             detections = net.forward()
 
