@@ -41,10 +41,19 @@ INCR = 35
 while display.IsOpen():
 
 	# capture the image
-	img, width, height = camera.CaptureRGBA()
+	img, width, height = camera.CaptureRGBA(zeroCopy=1)
+
+	# cudatonumpy conversion
+	img_numpy = jetson.utils.cudaToNumpy(img, width, height, 4)
+	print(type(img_numpy))
+	print(img_numpy.shape)
+	print(img_numpy.dtype)
+
+	# numpytocuda conversion
+	img_cuda
 
 	# detect objects in the image (with overlay)
-	detections = net.Detect(img, width, height, opt.overlay)
+	detections = net.Detect(img_cuda, width, height, opt.overlay)
 
 	# print the detections
 	# print("detected {:d} objects in image".format(len(detections)))
