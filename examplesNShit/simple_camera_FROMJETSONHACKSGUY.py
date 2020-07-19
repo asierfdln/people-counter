@@ -31,6 +31,9 @@ def show_camera():
         # Window 
         while cv2.getWindowProperty('CSI Camera',0) >= 0:
             ret_val, img = cap.read();
+            print(type(img))
+            print(img.dtype)
+            print(img.shape)
             cv2.imshow('CSI Camera',img)
 	    # This also acts as 
             keyCode = cv2.waitKey(30) & 0xFF
