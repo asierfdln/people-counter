@@ -1,8 +1,10 @@
 
 import cv2
 import numpy as np
+import sys
 
 import jetson.inference
+import jetson.utils
 
 
 def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800, display_height=600, framerate=30, flip_method=2):
@@ -21,9 +23,12 @@ def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800
 
 def main():
 
+	net = jetson.inference.detectNet("ssd-mobilenet-v2", sys.argv, 0.7)
+
 	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
 	if cap.isOpened():
+
 		while True:
 
 			# capture image
@@ -31,34 +36,41 @@ def main():
 
 			if ret:
 
-				cv2.imshow('sth...', img)
+				# print("Info de la imagen de opencv a pelo")
+				# print(img.dtype)
+				# print(img.shape)
+				# print("")
 
-				print("Info de la imagen de opencv a pelo")
-				print(img.dtype)
-				print(img.shape)
-				print("")
-
-				# convert image to RGBA format for net.Detect()
+				# convert image to RGBA format for cudaToNumpy
 				img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
 
-				print("Info de la imagen convertida para pasarla por net.Detect()")
-				print(img_rgba.dtype)
-				print(img_rgba.shape)
-				print("")
+				# print("Info de la imagen convertida para pasarla por cudaToNumpy")
+				# print(img_rgba.dtype)
+				# print(img_rgba.shape)
+				# print("")
 
-				# convert numpy array of uint8 to CUDA format in float32 for net.Detect()
-				# img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA).astype(np.float32)
-				# img = jetson.utils.cudaFromNumpy(img)
-				# detections = net.Detect(img, 1280, 720)
-				# img = jetson.utils.cudaToNumpy(img, 1280, 720, 4)
-				# img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB).astype(np.uint8)
-				# img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+				# cudaToNumpy conversion and detection
+				img_cuda = jetson.utils.cudaFromNumpy(img_rgba)
+				detections = net.Detect(img_cuda, 800, 600, "box,labels")
 
-				# jejeje, negativo xD (pon img para ver bien, pero claro necesitas poner
-				# las buenas infos de detecciones antes...)
-				# cv2.imshow('sth...', img_rgba)
+				# revert back the cuda-format image into opencv's bgr and display
+				img_rgba_w_detections = jetson.utils.cudaToNumpy(img_cuda, 800, 600, 4)
 
-			keyCode = cv2.waitKey(30) & 0xFF
+				# print("Info de la imagen img_rgba_w_detections")
+				# print(img_rgba_w_detections.dtype)
+				# print(img_rgba_w_detections.shape)
+				# print("")
+
+				img_bgr_w_detections = cv2.cvtColor(img_rgba_w_detections, cv2.COLOR_RGBA2BGR).astype(np.uint8)
+
+				# print("Info de la imagen img_bgr_w_detections")
+				# print(img_bgr_w_detections.dtype)
+				# print(img_bgr_w_detections.shape)
+				# print("")
+
+				cv2.imshow('sth...', img_bgr_w_detections)
+
+			keyCode = cv2.waitKey(1) & 0xFF
 			if keyCode == 27 or keyCode == ord('q'):
 				break
 
