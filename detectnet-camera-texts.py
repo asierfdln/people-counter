@@ -1,3 +1,4 @@
+
 import jetson.inference
 import jetson.utils
 
@@ -9,8 +10,8 @@ import os
 parser = argparse.ArgumentParser(description="Locate objects in a live camera stream using an object detection DNN.", 
 						   formatter_class=argparse.RawTextHelpFormatter, epilog=jetson.inference.detectNet.Usage())
 
-parser.add_argument("--network", type=str, default="coco-bottle", help="pre-trained model to load, see below for options")
-parser.add_argument("--overlay", type=str, default="box,labels", help="detection overlay flags (e.g. --overlay=box,labels,conf)\nvalid combinations are:  'box', 'labels', 'conf', 'none'")
+parser.add_argument("--network", type=str, default="ssd-mobilenet-v2", help="pre-trained model to load, see below for options")
+parser.add_argument("--overlay", type=str, default="box,labels,conf", help="detection overlay flags (e.g. --overlay=box,labels,conf)\nvalid combinations are:  'box', 'labels', 'conf', 'none'")
 parser.add_argument("--threshold", type=float, default=0.7, help="minimum detection threshold to use")
 parser.add_argument("--camera", type=str, default="0", help="index of the MIPI CSI camera to use (NULL for CSI camera 0)\nor for VL42 cameras the /dev/video node to use.\nby default, MIPI CSI camera 0 will be used.")
 parser.add_argument("--width", type=int, default=800, help="desired width of camera stream (default is 1280 pixels)")
@@ -50,10 +51,10 @@ while display.IsOpen():
 	print(img_numpy.dtype)
 
 	# numpytocuda conversion
-	img_cuda
+	img_cuda = jetson.utils.cudaFromNumpy(img_numpy)
 
 	# detect objects in the image (with overlay)
-	detections = net.Detect(img_cuda, width, height, opt.overlay)
+	detections = net.Detect(img, width, height, opt.overlay)
 
 	# print the detections
 	# print("detected {:d} objects in image".format(len(detections)))
@@ -79,9 +80,6 @@ while display.IsOpen():
 		# 	int(detection.Center[1] + detection.Height / 2) \
 		# ]
 		# rects.append(rectangle)
-
-	# if len(detections) > 0 and tracker is None:
-	# 	font.OverlayText(img, width, height, "hemos pillau algo", 50, 50, font.White, font.Gray40)
 
 	# # putText(image, text, org, font, fontScale, color[, thickness[, lineType[, bottomLeftOrigin]]])
 	# cv2.putText( \

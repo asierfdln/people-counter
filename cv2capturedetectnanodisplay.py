@@ -1,5 +1,6 @@
 
 import cv2
+import numpy as np
 
 import jetson.inference
 
@@ -30,18 +31,31 @@ def main():
 
 			if ret:
 
-				# cv2.imshow('sth...', img)
+				cv2.imshow('sth...', img)
+
+				print("Info de la imagen de opencv a pelo")
+				print(img.dtype)
+				print(img.shape)
+				print("")
 
 				# convert image to RGBA format for net.Detect()
-				img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
+				img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
 
+				print("Info de la imagen convertida para pasarla por net.Detect()")
 				print(img_rgba.dtype)
 				print(img_rgba.shape)
+				print("")
 
-				# convert numpy array of float32 to CUDA format for net.Detect()
+				# convert numpy array of uint8 to CUDA format in float32 for net.Detect()
+				# img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA).astype(np.float32)
+				# img = jetson.utils.cudaFromNumpy(img)
+				# detections = net.Detect(img, 1280, 720)
+				# img = jetson.utils.cudaToNumpy(img, 1280, 720, 4)
+				# img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB).astype(np.uint8)
+				# img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-
-				# jejeje
+				# jejeje, negativo xD (pon img para ver bien, pero claro necesitas poner
+				# las buenas infos de detecciones antes...)
 				# cv2.imshow('sth...', img_rgba)
 
 			keyCode = cv2.waitKey(30) & 0xFF
