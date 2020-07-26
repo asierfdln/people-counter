@@ -1,5 +1,6 @@
 
 # comando de pruebas -> python3 cv2capturedetectnanodisplay.py --network=coco-bottle
+# comando de pruebas -> python3 cv2capturedetectnanodisplay.py --network=multiped
 
 import cv2
 import dlib
@@ -10,7 +11,13 @@ import jetson.inference
 import jetson.utils
 
 
-def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800, display_height=600, framerate=30, flip_method=2):
+WIDTH = 800
+HEIGHT = 600
+
+COUNTING_OFFSET = 50
+
+
+def gstreamer_pipeline (capture_width=WIDTH, capture_height=HEIGHT, display_width=800, display_height=600, framerate=30, flip_method=2):
 	return (
 		'nvarguscamerasrc ! '
 		'video/x-raw(memory:NVMM), '
@@ -34,11 +41,14 @@ def main():
 	endX = None
 	endY = None
 
+	redo_detection = False
+
+	contador_yendo_derecha = 0
+	contador_yendo_izquierda = 0
+
 	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
 	if cap.isOpened():
-
-		redo_detection = False
 
 		while True:
 
@@ -97,34 +107,80 @@ def main():
 						]
 						rects.append(rectangle)
 
+					# TODO merge with loopthang above??
 					if len(rects) > 0:
 						for rectangle in rects:
+							list_w_tracker = []
 							tracker = dlib.correlation_tracker()
 							rect_dlib = dlib.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
 							tracker.start_track(img_rgb, rect_dlib)
-							trackers.append(tracker)
-					
+							# trackers.append(tracker)
+							list_w_tracker.append(tracker)
+							if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
+								list_w_tracker.append(-1)
+								print(f'Así andamos en la izquierda bro ------> {list_w_tracker}')
+							elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
+								list_w_tracker.append(1)
+								print(f'Así andamos en la derecha bro ------> {list_w_tracker}')
+							trackers.append(list_w_tracker)
+
 					print(f'UEEEEEEEEEEEEEEEE tenemos {str(len(trackers))} tracker(s) en marcha hulio')
 
 				else:
 
-					for tracker in trackers:
+					for list_w_tracker in trackers:
 
-						tracker.update(img_rgb)
-						pos = tracker.get_position()
+						list_w_tracker[0].update(img_rgb)
+						pos = list_w_tracker[0].get_position()
 
 						startX = int(pos.left())
 						startY = int(pos.top())
 						endX = int(pos.right())
 						endY = int(pos.bottom())
 
+						if (startX + (endX - startX) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET) and list_w_tracker[1] == 1:
+							list_w_tracker[1] = -1
+							contador_yendo_izquierda = contador_yendo_izquierda + 1
+							if contador_yendo_derecha > 0:
+								contador_yendo_derecha = contador_yendo_derecha - 1
+						elif (startX + (endX - startX) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET) and list_w_tracker[1] == -1:
+							list_w_tracker[1] = 1
+							contador_yendo_derecha = contador_yendo_derecha + 1
+							if contador_yendo_izquierda > 0:
+								contador_yendo_izquierda = contador_yendo_izquierda - 1
+
+						print(f'Así seguimos bro ------> {list_w_tracker}')
+
 						cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+				cv2.putText( \
+					img, \
+					f'thingz pa la izquierda -> {contador_yendo_izquierda}', \
+					(0, 23), \
+					cv2.FONT_HERSHEY_SIMPLEX, \
+					0.45, \
+					(0, 255, 0), \
+					1 \
+				)
+
+				cv2.putText( \
+					img, \
+					f'thingz pa la derecha -> {contador_yendo_derecha}', \
+					(0, 10), \
+					cv2.FONT_HERSHEY_SIMPLEX, \
+					0.45, \
+					(0, 255, 0), \
+					1 \
+				)
 
 				cv2.imshow('sth...', img)
 
 			keyCode = cv2.waitKey(1) & 0xFF
 			if keyCode == 27 or keyCode == ord('q'):
 				break
+			elif keyCode == ord('a'):
+				contador_yendo_izquierda = 0
+				contador_yendo_derecha = 0
 			elif keyCode == ord('r'):
 				redo_detection = True
 
