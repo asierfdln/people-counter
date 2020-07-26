@@ -28,7 +28,7 @@ def main():
 
 	net = jetson.inference.detectNet("ssd-mobilenet-v2", sys.argv, 0.99)
 
-	tracker= None
+	trackers= []
 	startX = None
 	startY = None
 	endX = None
@@ -37,6 +37,8 @@ def main():
 	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
 	if cap.isOpened():
+
+		redo_detection = False
 
 		while True:
 
@@ -52,7 +54,11 @@ def main():
 
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-				if tracker is None:
+				if len(trackers) == 0 or redo_detection:
+
+					redo_detection = False
+					trackers = []
+					print("Tamosssss detectin' brooooooooo")
 
 					# convert image to RGBA format for cudaToNumpy
 					img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
@@ -81,7 +87,7 @@ def main():
 					# print(img_bgr_w_detections.shape)
 					# print("")
 
-					rects = []
+					rects = [] # TODO move up??
 					for detection in detections:
 						rectangle = [ \
 							int(detection.Center[0] - detection.Width / 2), \
@@ -90,31 +96,37 @@ def main():
 							int(detection.Center[1] + detection.Height / 2) \
 						]
 						rects.append(rectangle)
-						break
+
+					if len(rects) > 0:
+						for rectangle in rects:
+							tracker = dlib.correlation_tracker()
+							rect_dlib = dlib.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
+							tracker.start_track(img_rgb, rect_dlib)
+							trackers.append(tracker)
 					
-					if len(rects) == 1:
-						tracker = dlib.correlation_tracker()
-						rect = dlib.rectangle(rects[0][0], rects[0][1], rects[0][2], rects[0][3])
-						tracker.start_track(img_rgb, rect)
+					print(f'UEEEEEEEEEEEEEEEE tenemos {str(len(trackers))} tracker(s) en marcha hulio')
 
 				else:
 
-					tracker.update(img_rgb)
-					pos = tracker.get_position()
+					for tracker in trackers:
 
-					startX = int(pos.left())
-					startY = int(pos.top())
-					endX = int(pos.right())
-					endY = int(pos.bottom())
+						tracker.update(img_rgb)
+						pos = tracker.get_position()
 
-					cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
+						startX = int(pos.left())
+						startY = int(pos.top())
+						endX = int(pos.right())
+						endY = int(pos.bottom())
 
-				# cv2.imshow('sth...', img_bgr_w_detections)
+						cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
 				cv2.imshow('sth...', img)
 
 			keyCode = cv2.waitKey(1) & 0xFF
 			if keyCode == 27 or keyCode == ord('q'):
 				break
+			elif keyCode == ord('r'):
+				redo_detection = True
 
 		cap.release()
 		cv2.destroyAllWindows()
