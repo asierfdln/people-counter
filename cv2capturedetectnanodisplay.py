@@ -1,22 +1,28 @@
 
-# comando de pruebas -> python3 cv2capturedetectnanodisplay.py --network=coco-bottle
-# comando de pruebas -> python3 cv2capturedetectnanodisplay.py --network=multiped
+# comando de botellas -> python3 cv2capturedetectnanodisplay.py --network=coco-bottle
+# comando de personas -> python3 cv2capturedetectnanodisplay.py --network=multiped
 
 import cv2
 import dlib
 import numpy as np
 import sys
 
+# ojo con poner cv2 despues de estos imports de jetson, a veces petan cosas...
 import jetson.inference
 import jetson.utils
 
 
+# dimensiones de la ventana Y de las imagenes a capturar por la
+# camara (TODO con argparse plz...)
 WIDTH = 800
 HEIGHT = 600
 
+# numero de pixeles de más/menos para evitar contar 
+# izq/dcha cuando algo esta en el medio
 COUNTING_OFFSET = 50
 
 
+# funcion para sacar la cámara
 def gstreamer_pipeline (capture_width=WIDTH, capture_height=HEIGHT, display_width=800, display_height=600, framerate=30, flip_method=2):
 	return (
 		'nvarguscamerasrc ! '
@@ -33,71 +39,66 @@ def gstreamer_pipeline (capture_width=WIDTH, capture_height=HEIGHT, display_widt
 
 def main():
 
-	net = jetson.inference.detectNet("ssd-mobilenet-v2", sys.argv, 0.99)
-
+	# lista de trackers de dlib
 	trackers= []
-	startX = None
-	startY = None
-	endX = None
-	endY = None
 
+	# flag para pasar otra vez el frame por net.Detect() y detectar objetos
 	redo_detection = False
 
+	# contadores de padonde van las cosis
 	contador_yendo_derecha = 0
 	contador_yendo_izquierda = 0
 
+	# el modelo a cargar por defecto, poner en consola "--network={algo}"
+	# para sobreescribir a ssd-mobilenet-v2
+	net = jetson.inference.detectNet("ssd-mobilenet-v2", sys.argv, 0.99)
+
+	# camara de opencv
 	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
 
 	if cap.isOpened():
 
+		# bucle principal
 		while True:
 
-			# capture image
+			# captura imagen
 			ret, img = cap.read()
 
+			# este ret es una variable que se pone a "True"
+			# si se ha pillao la imagen bien
 			if ret:
 
-				# print("Info de la imagen de opencv a pelo")
-				# print(img.dtype)
-				# print(img.shape)
-				# print("")
-
+				# dlib luego quiere las imagenes en rgb (TODO poner solo en el else de abajo??)
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+				# zona del bucle para las detecciones (TODO multiprocessing
+				# para if y else a la vez???, pensar un poco...),
+				# esto hay que cambiar para que sea 1 de cada X 
+				# frames, es decir, entra a hacer detecciones cuando eso
+				# (lo de ahora es para las pruebas de los videos)
 				if len(trackers) == 0 or redo_detection:
 
+					# reseteamos el flag de darle a la tecla R de "refresh"
 					redo_detection = False
+
+					# vaciamos la lista de trackers para empezar de cero
 					trackers = []
+
+					# la verdad es que estaría bien tener un poco de
+					# loggers algo más serios que esto xD
 					print("Tamosssss detectin' brooooooooo")
 
-					# convert image to RGBA format for cudaToNumpy
+					# convierte la imagen en formato opencv (BGR unit8) a RGBA float32
 					img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
 
-					# print("Info de la imagen convertida para pasarla por cudaToNumpy")
-					# print(img_rgba.dtype)
-					# print(img_rgba.shape)
-					# print("")
-
-					# cudaToNumpy conversion and detection
+					# pasa la imagen RGBA float32 a memoria CUDA y haz las detecciones
 					img_cuda = jetson.utils.cudaFromNumpy(img_rgba)
-					detections = net.Detect(img_cuda, 800, 600, "box,labels")
+					detections = net.Detect(img_cuda, 800, 600, "box,labels") # TODO probar con 'none'
 
-					# revert back the cuda-format image into opencv's bgr and display
-					# img_rgba_w_detections = jetson.utils.cudaToNumpy(img_cuda, 800, 600, 4)
-# TODO sobra
-					# print("Info de la imagen img_rgba_w_detections")
-					# print(img_rgba_w_detections.dtype)
-					# print(img_rgba_w_detections.shape)
-					# print("")
-
-					# img_bgr_w_detections = cv2.cvtColor(img_rgba_w_detections, cv2.COLOR_RGBA2BGR).astype(np.uint8)
-# TODO sobra
-					# print("Info de la imagen img_bgr_w_detections")
-					# print(img_bgr_w_detections.dtype)
-					# print(img_bgr_w_detections.shape)
-					# print("")
-
-					rects = [] # TODO move up??
+					# cogemos la informacion de todas las detecciones y calculamos las
+					# esquinas superior izquierda y la inferior derecha porque dlib 
+					# y sus trackers son asi de especiales
+					rects = [] # TODO definir arriba con las otras variables mejor??
 					for detection in detections:
 						rectangle = [ \
 							int(detection.Center[0] - detection.Width / 2), \
@@ -107,87 +108,160 @@ def main():
 						]
 						rects.append(rectangle)
 
-					# TODO merge with loopthang above??
-					if len(rects) > 0:
-						for rectangle in rects:
-							list_w_tracker = []
+					# cogemos las coordenadas de los rectangulos de las detecciones y
+					# se las pasamos a un tracker por cada deteccion realizada, luego guardamos un numerillo
+					# junto con el tracker para ver en qué mitad de la imagen esta el objeto y asi contar luego
+					# las cosas de un lado palotro (-1 izquierda, 1 derecha)
+					if len(rects) > 0: # TODO sobra...
+
+						for rectangle in rects: # TODO juntar con bucle for de arriba...
+
+							# lista con (1) el tracker y (2) el numerillo de izq/dcha
+							list_w_tracker = [] # TODO objetos nuestros definidos??...
+
+							# creamos un tracker de dlib
 							tracker = dlib.correlation_tracker()
+
+							# le pasamos las esquinas del rectangulo
 							rect_dlib = dlib.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
+
+							# empesamos el trackeo
 							tracker.start_track(img_rgb, rect_dlib)
-							# trackers.append(tracker)
+
+							# añadimos el tracker a la lista magica esta
 							list_w_tracker.append(tracker)
+
+							# miramos si la deteccion esta en la izq
 							if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
+
 								list_w_tracker.append(-1)
+
+								# de nuevo, comentarios megaprofesionales xD
 								print(f'Así andamos en la izquierda bro ------> {list_w_tracker}')
+
+							# miramos si la deteccion esta en la dcha
 							elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
+
 								list_w_tracker.append(1)
+
+								# de nuevo x2, comentarios megaprofesionales xD
 								print(f'Así andamos en la derecha bro ------> {list_w_tracker}')
+							
+							# lista con las listas de los trackers
 							trackers.append(list_w_tracker)
 
+					# se empieza a ver el patron de mi tonteria mental...
 					print(f'UEEEEEEEEEEEEEEEE tenemos {str(len(trackers))} tracker(s) en marcha hulio')
 
+				# zona de trackeo, actualizacion de los trackers de dlib
 				else:
 
+					# pillamos cada una de las magicolistas con (1) el tracker y
+					# (2) el numerillo izq/dcha
 					for list_w_tracker in trackers:
 
+						# para updatear un tracker hay que pasarle la imagen en formato rgb
 						list_w_tracker[0].update(img_rgb)
+						# sacamos el objeto de posicion que devuelve el tracker
 						pos = list_w_tracker[0].get_position()
 
+						# esquina superior izquierda
 						startX = int(pos.left())
 						startY = int(pos.top())
+
+						# esquina inferior derecha
 						endX = int(pos.right())
 						endY = int(pos.bottom())
 
+						# miramos si (1) el objeto se pasa de la mitad + offset y (2) si
+						# el numerillo de antes indicaba que estaba en la otra mitad
 						if (startX + (endX - startX) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET) and list_w_tracker[1] == 1:
+
+							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = -1
+
+							# actualizamos contadores
 							contador_yendo_izquierda = contador_yendo_izquierda + 1
 							if contador_yendo_derecha > 0:
 								contador_yendo_derecha = contador_yendo_derecha - 1
+
 						elif (startX + (endX - startX) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET) and list_w_tracker[1] == -1:
+
+							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = 1
+
+							# actualizamos contadores
 							contador_yendo_derecha = contador_yendo_derecha + 1
 							if contador_yendo_izquierda > 0:
 								contador_yendo_izquierda = contador_yendo_izquierda - 1
 
+						# comentario chorra para asegurar
 						print(f'Así seguimos bro ------> {list_w_tracker}')
 
+						# pintamos el cuadradico
 						cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
+				# MUCHO TEXTO
+				cv2.putText( \
+
+					# imagen sobre la que pintar
+					img, \
+
+					# texto
+					f'Hacia la izquierda -> {contador_yendo_izquierda}', \
+
+					# posicion del texto
+					(0, 30), \
+
+					# fuente
+					cv2.FONT_HERSHEY_SIMPLEX, \
+
+					# tamaño letra
+					1.25, \
+
+					# color
+					(0, 255, 0), \
+
+					# grosor linea
+					1 \
+				)
+
+				# MUCHO TEXTO
 				cv2.putText( \
 					img, \
-					f'thingz pa la izquierda -> {contador_yendo_izquierda}', \
-					(0, 23), \
+					f'Hacia la derecha -> {contador_yendo_derecha}', \
+					(0, 65), \
 					cv2.FONT_HERSHEY_SIMPLEX, \
-					0.45, \
+					1.25, \
 					(0, 255, 0), \
 					1 \
 				)
 
-				cv2.putText( \
-					img, \
-					f'thingz pa la derecha -> {contador_yendo_derecha}', \
-					(0, 10), \
-					cv2.FONT_HERSHEY_SIMPLEX, \
-					0.45, \
-					(0, 255, 0), \
-					1 \
-				)
-
+				# sacamos imagen a la ventana
 				cv2.imshow('sth...', img)
 
+			# pillamos pulsacion de tecla
 			keyCode = cv2.waitKey(1) & 0xFF
-			if keyCode == 27 or keyCode == ord('q'):
+
+			# para salir del bucle pulsar 'q' o 'esc'
+			if keyCode == 27 or keyCode == ord('q'): # TODO salir con X en ventana no funciona??
 				break
+
+			# para resetear los contadores pulsar 'a' (de "again"...)
 			elif keyCode == ord('a'):
 				contador_yendo_izquierda = 0
 				contador_yendo_derecha = 0
+
+			# para resetear detecciones de forma manual pulsar 'r' (de "refresh"...)
 			elif keyCode == ord('r'):
 				redo_detection = True
 
+		# cerramos todo el cotarro
 		cap.release()
 		cv2.destroyAllWindows()
 
 	else:
+
 		print('Unable to open camera')
 
 
