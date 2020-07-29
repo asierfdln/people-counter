@@ -12,18 +12,8 @@ import jetson.inference
 import jetson.utils
 
 
-# dimensiones de la ventana Y de las imagenes a capturar por la
-# camara (TODO con argparse plz...)
-WIDTH = 800
-HEIGHT = 600
-
-# numero de pixeles de más/menos para evitar contar 
-# izq/dcha cuando algo esta en el medio
-COUNTING_OFFSET = 50
-
-
 # funcion para sacar la cámara
-def gstreamer_pipeline (capture_width=WIDTH, capture_height=HEIGHT, display_width=800, display_height=600, framerate=30, flip_method=2):
+def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800, display_height=600, framerate=30, flip_method=2):
 	return (
 		'nvarguscamerasrc ! '
 		'video/x-raw(memory:NVMM), '
@@ -39,11 +29,24 @@ def gstreamer_pipeline (capture_width=WIDTH, capture_height=HEIGHT, display_widt
 
 def main():
 
+	# dimensiones de la ventana Y de las imagenes a capturar por la
+	# camara (TODO con argparse plz...)
+	WIDTH = 800
+	HEIGHT = 600
+
+	# numero de pixeles de más/menos para evitar contar 
+	# izq/dcha cuando algo esta en el medio
+	COUNTING_OFFSET = 10
+
 	# lista de trackers de dlib
 	trackers= []
 
 	# flag para pasar otra vez el frame por net.Detect() y detectar objetos
 	redo_detection = False
+
+	# numero de frames tras los cuales hacer un refresh de detecciones
+	contador_frames = 0
+	FRAMES_DETECT = 50
 
 	# contadores de padonde van las cosis
 	contador_yendo_derecha = 0
@@ -51,10 +54,19 @@ def main():
 
 	# el modelo a cargar por defecto, poner en consola "--network={algo}"
 	# para sobreescribir a ssd-mobilenet-v2
-	net = jetson.inference.detectNet("ssd-mobilenet-v2", sys.argv, 0.99)
+	net = jetson.inference.detectNet('ssd-mobilenet-v2', sys.argv, 0.99)
 
 	# camara de opencv
-	cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=2), cv2.CAP_GSTREAMER)
+	cap = cv2.VideoCapture( \
+		gstreamer_pipeline( \
+			capture_width=WIDTH, \
+			capture_height=HEIGHT, \
+			display_width=WIDTH, \
+			display_height=HEIGHT, \
+			flip_method=2 \
+		), \
+		cv2.CAP_GSTREAMER \
+	)
 
 	if cap.isOpened():
 
@@ -68,7 +80,10 @@ def main():
 			# si se ha pillao la imagen bien
 			if ret:
 
-				# dlib luego quiere las imagenes en rgb (TODO poner solo en el else de abajo??)
+				# vamos sumando el contador de frames capturados por la camara
+				contador_frames += 1
+
+				# dlib luego quiere las imagenes en rgb
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 				# zona del bucle para las detecciones (TODO multiprocessing
@@ -76,82 +91,78 @@ def main():
 				# esto hay que cambiar para que sea 1 de cada X 
 				# frames, es decir, entra a hacer detecciones cuando eso
 				# (lo de ahora es para las pruebas de los videos)
-				if len(trackers) == 0 or redo_detection:
+
+				# if len(trackers) == 0 or redo_detection:
+				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
 
 					# reseteamos el flag de darle a la tecla R de "refresh"
 					redo_detection = False
 
 					# vaciamos la lista de trackers para empezar de cero
-					trackers = []
-
-					# la verdad es que estaría bien tener un poco de
-					# loggers algo más serios que esto xD
-					print("Tamosssss detectin' brooooooooo")
+					trackers = [] # TODO vaciar no parece como muy buena idea, en funcion de la
+								  # de las posiciones de las detecciones se puede ver si quitar
+								  # o no, medir tiempo de creacion de dos trackers y
+								  # la comparacion...
 
 					# convierte la imagen en formato opencv (BGR unit8) a RGBA float32
 					img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
 
 					# pasa la imagen RGBA float32 a memoria CUDA y haz las detecciones
 					img_cuda = jetson.utils.cudaFromNumpy(img_rgba)
-					detections = net.Detect(img_cuda, 800, 600, "box,labels") # TODO probar con 'none'
+					detections = net.Detect(img_cuda, 800, 600, 'none')
 
 					# cogemos la informacion de todas las detecciones y calculamos las
 					# esquinas superior izquierda y la inferior derecha porque dlib 
 					# y sus trackers son asi de especiales
-					rects = [] # TODO definir arriba con las otras variables mejor??
 					for detection in detections:
+
+						# cogemos las coordenadas de los rectangulos de las detecciones y
+						# se las pasamos a un tracker por cada deteccion realizada, luego
+						# guardamos un numerillo junto con el tracker para ver en que mitad de
+						# la imagen esta el objeto y asi contar luego las cosas de un lado
+						# palotro (-1 izquierda, 1 derecha)
+
 						rectangle = [ \
 							int(detection.Center[0] - detection.Width / 2), \
 							int(detection.Center[1] - detection.Height / 2), \
 							int(detection.Center[0] + detection.Width / 2), \
 							int(detection.Center[1] + detection.Height / 2) \
 						]
-						rects.append(rectangle)
 
-					# cogemos las coordenadas de los rectangulos de las detecciones y
-					# se las pasamos a un tracker por cada deteccion realizada, luego guardamos un numerillo
-					# junto con el tracker para ver en qué mitad de la imagen esta el objeto y asi contar luego
-					# las cosas de un lado palotro (-1 izquierda, 1 derecha)
-					if len(rects) > 0: # TODO sobra...
+						# lista con (1) el tracker y (2) el numerillo de izq/dcha
+						list_w_tracker = [] # TODO objetos nuestros definidos??...
 
-						for rectangle in rects: # TODO juntar con bucle for de arriba...
+						# creamos un tracker de dlib
+						tracker = dlib.correlation_tracker()
 
-							# lista con (1) el tracker y (2) el numerillo de izq/dcha
-							list_w_tracker = [] # TODO objetos nuestros definidos??...
+						# le pasamos las esquinas del rectangulo
+						rect_dlib = dlib.rectangle( \
+							rectangle[0], \
+							rectangle[1], \
+							rectangle[2], \
+							rectangle[3] \
+						)
 
-							# creamos un tracker de dlib
-							tracker = dlib.correlation_tracker()
+						# empesamos el trackeo
+						tracker.start_track(img_rgb, rect_dlib)
 
-							# le pasamos las esquinas del rectangulo
-							rect_dlib = dlib.rectangle(rectangle[0], rectangle[1], rectangle[2], rectangle[3])
+						# añadimos el tracker a la lista magica esta
+						list_w_tracker.append(tracker)
 
-							# empesamos el trackeo
-							tracker.start_track(img_rgb, rect_dlib)
+						# miramos si la deteccion esta en la izq TODO REVISAR
+						# if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET):
+						if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
 
-							# añadimos el tracker a la lista magica esta
-							list_w_tracker.append(tracker)
+							list_w_tracker.append(-1)
 
-							# miramos si la deteccion esta en la izq
-							if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
+						# miramos si la deteccion esta en la dcha TODO REVISAR
+						# elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET):
+						elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
 
-								list_w_tracker.append(-1)
+							list_w_tracker.append(1)
 
-								# de nuevo, comentarios megaprofesionales xD
-								print(f'Así andamos en la izquierda bro ------> {list_w_tracker}')
-
-							# miramos si la deteccion esta en la dcha
-							elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
-
-								list_w_tracker.append(1)
-
-								# de nuevo x2, comentarios megaprofesionales xD
-								print(f'Así andamos en la derecha bro ------> {list_w_tracker}')
-							
-							# lista con las listas de los trackers
-							trackers.append(list_w_tracker)
-
-					# se empieza a ver el patron de mi tonteria mental...
-					print(f'UEEEEEEEEEEEEEEEE tenemos {str(len(trackers))} tracker(s) en marcha hulio')
+						# lista con las listas de los trackers
+						trackers.append(list_w_tracker)
 
 				# zona de trackeo, actualizacion de los trackers de dlib
 				else:
@@ -173,9 +184,12 @@ def main():
 						endX = int(pos.right())
 						endY = int(pos.bottom())
 
+						# TODO DE VERDAD NECESITAS EL OFFSET?????????????
+
 						# miramos si (1) el objeto se pasa de la mitad + offset y (2) si
 						# el numerillo de antes indicaba que estaba en la otra mitad
 						if (startX + (endX - startX) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET) and list_w_tracker[1] == 1:
+						# if (startX + (endX - startX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = -1
@@ -186,6 +200,7 @@ def main():
 								contador_yendo_derecha = contador_yendo_derecha - 1
 
 						elif (startX + (endX - startX) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET) and list_w_tracker[1] == -1:
+						# elif (startX + (endX - startX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = 1
@@ -194,9 +209,6 @@ def main():
 							contador_yendo_derecha = contador_yendo_derecha + 1
 							if contador_yendo_izquierda > 0:
 								contador_yendo_izquierda = contador_yendo_izquierda - 1
-
-						# comentario chorra para asegurar
-						print(f'Así seguimos bro ------> {list_w_tracker}')
 
 						# pintamos el cuadradico
 						cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
