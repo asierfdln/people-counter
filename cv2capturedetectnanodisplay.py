@@ -82,8 +82,7 @@ def main():
 				# dlib luego quiere las imagenes en rgb
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-				# zona del bucle para las detecciones (TODO multiprocessing
-				# para if y else a la vez???, pensar un poco...)
+				# zona del bucle para las detecciones 
 
 				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
 
@@ -91,11 +90,11 @@ def main():
 					redo_detection = False
 
 					# vaciamos la lista de trackers para empezar de cero
-					trackers = [] # TODO vaciar no parece como muy buena idea, en funcion de la
+					trackers = [] # TODO RENDIMIENTO vaciar no parece como muy buena idea, en funcion de la
 								  # de las posiciones de las detecciones se puede ver si quitar
 								  # o no
 								  # 
-								  # TODO medir tb tiempo de creacion de dos trackers y
+								  # TODO RENDIMIENTO medir tb tiempo de creacion de dos trackers y
 								  # la comparacion...
 
 					# convierte la imagen en formato opencv (BGR unit8) a RGBA float32
@@ -169,18 +168,18 @@ def main():
 						pos = list_w_tracker[0].get_position()
 
 						# esquina superior izquierda
-						startX = int(pos.left())
-						startY = int(pos.top())
+						upperLeftCornerX = int(pos.left())
+						upperLeftCornerY = int(pos.top())
 
 						# esquina inferior derecha
-						endX = int(pos.right())
-						endY = int(pos.bottom())
+						lowerRightCornerX = int(pos.right())
+						lowerRightCornerY = int(pos.bottom())
 
 						# miramos si (1) el objeto se pasa de la mitad y (2) si
 						# el numerillo de antes indicaba que estaba en la otra mitad;
 						# los casos extremos de justo se vuelve a detectar algo cuando ya
 						# se ha pasado de la mitadpues nos jodemos...
-						if (startX + (endX - startX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
+						if (upperLeftCornerX + (lowerRightCornerX - upperLeftCornerX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = -1
@@ -190,7 +189,7 @@ def main():
 							if contador_yendo_derecha > 0:
 								contador_yendo_derecha = contador_yendo_derecha - 1
 
-						elif (startX + (endX - startX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
+						elif (upperLeftCornerX + (lowerRightCornerX - upperLeftCornerX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = 1
@@ -201,7 +200,7 @@ def main():
 								contador_yendo_izquierda = contador_yendo_izquierda - 1
 
 						# pintamos el cuadradico
-						cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
+						cv2.rectangle(img, (upperLeftCornerX, upperLeftCornerY), (lowerRightCornerX, lowerRightCornerY), (0, 255, 0), 2)
 
 				# MUCHO TEXTO
 				cv2.putText( \
