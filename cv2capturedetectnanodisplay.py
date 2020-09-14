@@ -34,10 +34,6 @@ def main():
 	WIDTH = 800
 	HEIGHT = 600
 
-	# numero de pixeles de más/menos para evitar contar 
-	# izq/dcha cuando algo esta en el medio
-	COUNTING_OFFSET = 10
-
 	# lista de trackers de dlib
 	trackers= []
 
@@ -87,12 +83,8 @@ def main():
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 				# zona del bucle para las detecciones (TODO multiprocessing
-				# para if y else a la vez???, pensar un poco...),
-				# esto hay que cambiar para que sea 1 de cada X 
-				# frames, es decir, entra a hacer detecciones cuando eso
-				# (lo de ahora es para las pruebas de los videos)
+				# para if y else a la vez???, pensar un poco...)
 
-				# if len(trackers) == 0 or redo_detection:
 				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
 
 					# reseteamos el flag de darle a la tecla R de "refresh"
@@ -101,7 +93,9 @@ def main():
 					# vaciamos la lista de trackers para empezar de cero
 					trackers = [] # TODO vaciar no parece como muy buena idea, en funcion de la
 								  # de las posiciones de las detecciones se puede ver si quitar
-								  # o no, medir tiempo de creacion de dos trackers y
+								  # o no
+								  # 
+								  # TODO medir tb tiempo de creacion de dos trackers y
 								  # la comparacion...
 
 					# convierte la imagen en formato opencv (BGR unit8) a RGBA float32
@@ -149,14 +143,12 @@ def main():
 						# añadimos el tracker a la lista magica esta
 						list_w_tracker.append(tracker)
 
-						# miramos si la deteccion esta en la izq TODO REVISAR
-						# if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET):
+						# miramos si la deteccion esta en la izq
 						if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
 
 							list_w_tracker.append(-1)
 
-						# miramos si la deteccion esta en la dcha TODO REVISAR
-						# elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET):
+						# miramos si la deteccion esta en la dcha
 						elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
 
 							list_w_tracker.append(1)
@@ -184,12 +176,11 @@ def main():
 						endX = int(pos.right())
 						endY = int(pos.bottom())
 
-						# TODO DE VERDAD NECESITAS EL OFFSET?????????????
-
-						# miramos si (1) el objeto se pasa de la mitad + offset y (2) si
-						# el numerillo de antes indicaba que estaba en la otra mitad
-						if (startX + (endX - startX) / 2) <= ((WIDTH / 2) - COUNTING_OFFSET) and list_w_tracker[1] == 1:
-						# if (startX + (endX - startX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
+						# miramos si (1) el objeto se pasa de la mitad y (2) si
+						# el numerillo de antes indicaba que estaba en la otra mitad;
+						# los casos extremos de justo se vuelve a detectar algo cuando ya
+						# se ha pasado de la mitadpues nos jodemos...
+						if (startX + (endX - startX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = -1
@@ -199,8 +190,7 @@ def main():
 							if contador_yendo_derecha > 0:
 								contador_yendo_derecha = contador_yendo_derecha - 1
 
-						elif (startX + (endX - startX) / 2) >= ((WIDTH / 2) + COUNTING_OFFSET) and list_w_tracker[1] == -1:
-						# elif (startX + (endX - startX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
+						elif (startX + (endX - startX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
 
 							# el objeto se ha movido para la izquierda, cambiamos a -1
 							list_w_tracker[1] = 1
