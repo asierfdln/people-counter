@@ -27,6 +27,44 @@ def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800
 	)
 
 
+# funcion para verificar que una deteccion se encuentra dentro de una zona de interes
+def detection_in_area(counting_area, rect_of_detection):
+
+	# centro de la deteccion
+	x_of_detection = (rect_of_detection[2] - rect_of_detection[0]) / 2
+	y_of_detection = (rect_of_detection[3] - rect_of_detection[1]) / 2
+
+	if (x_of_detection >= counting_area[0] and x_of_detection <= counting_area[2])
+		and
+	   (y_of_detection >= counting_area[1] and y_of_detection <= counting_area[3]):
+
+		return True
+
+	else:
+		return False
+
+
+# TODO separar esto en un solo bucle para evitar 1 deteccion n zonas, 2 deteccion n zonas...
+# funcion para determinar si las coordenadas centrales de una deteccion entran dentro de una zona de interes
+def zone_explorer(list_of_counting_areas, rect_of_detection):
+
+	# numero del area en el que se situa la deteccion 
+	counter_of_area_to_return = 1
+
+	# miramos
+	for counting_area in list_of_counting_areas:
+
+		if detection_in_area(counting_area, rect_of_detection):
+
+			return counter_of_area_to_return
+
+		else:
+			counter_of_area_to_return = counter_of_area_to_return + 1
+
+	else:
+		return 0 # no estamos en ninguna zona
+
+
 def main():
 
 	# dimensiones de la ventana Y de las imagenes a capturar por la
@@ -63,6 +101,14 @@ def main():
 		), \
 		cv2.CAP_GSTREAMER \
 	)
+
+	# TODO cap.capture, imshow y con raton/teclado definir zonas...
+
+	# lista de areas [arribaizqx, arribaizqy, debajodchax, debajodchay, contador_detecciones_in] en las que contar peoples
+	counting_areas = [[10, 10, 60, 60, 0]]
+
+	# constante a utilizar para el conteo de detecciones en las diferentes zonas
+	NUM_OF_COUNTING_AREAS_plusone = len(counting_areas) + 1
 
 	if cap.isOpened():
 
@@ -142,15 +188,9 @@ def main():
 						# añadimos el tracker a la lista magica esta
 						list_w_tracker.append(tracker)
 
-						# miramos si la deteccion esta en la izq
-						if (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) <= (WIDTH / 2):
-
-							list_w_tracker.append(-1)
-
-						# miramos si la deteccion esta en la dcha
-						elif (rectangle[0] + (rectangle[2] - rectangle[0]) / 2) >= (WIDTH / 2):
-
-							list_w_tracker.append(1)
+						# asignamos al tracker una de las zonas de interes (o fuera, 0)
+						number_of_zone = zone_explorer(counting_areas, rect_dlib)
+						list_w_tracker.append(number_of_zone)
 
 						# lista con las listas de los trackers
 						trackers.append(list_w_tracker)
@@ -175,29 +215,22 @@ def main():
 						lowerRightCornerX = int(pos.right())
 						lowerRightCornerY = int(pos.bottom())
 
-						# miramos si (1) el objeto se pasa de la mitad y (2) si
-						# el numerillo de antes indicaba que estaba en la otra mitad;
-						# los casos extremos de justo se vuelve a detectar algo cuando ya
-						# se ha pasado de la mitadpues nos jodemos...
-						if (upperLeftCornerX + (lowerRightCornerX - upperLeftCornerX) / 2) <= (WIDTH / 2) and list_w_tracker[1] == 1:
+						# TODO mismo que list_w_tracker[0].get_position()??
+						# QOL notationz
+						rectangle_from_trackerpos = [upperLeftCornerX, upperLeftCornerY, lowerRightCornerX, lowerRightCornerY]
 
-							# el objeto se ha movido para la izquierda, cambiamos a -1
-							list_w_tracker[1] = -1
-
-							# actualizamos contadores
-							contador_yendo_izquierda = contador_yendo_izquierda + 1
-							if contador_yendo_derecha > 0:
-								contador_yendo_derecha = contador_yendo_derecha - 1
-
-						elif (upperLeftCornerX + (lowerRightCornerX - upperLeftCornerX) / 2) >= (WIDTH / 2) and list_w_tracker[1] == -1:
-
-							# el objeto se ha movido para la izquierda, cambiamos a -1
-							list_w_tracker[1] = 1
-
-							# actualizamos contadores
-							contador_yendo_derecha = contador_yendo_derecha + 1
-							if contador_yendo_izquierda > 0:
-								contador_yendo_izquierda = contador_yendo_izquierda - 1
+						for i in range(1, NUM_OF_COUNTING_AREAS_plusone):
+							if detection_in_area(counting_areas[i-1], rectangle_from_trackerpos):
+								if list_w_tracker[1] != i:
+									list_w_tracker[1] = i
+									counting_areas[i-1][4] = counting_areas[i-1][4] + 1
+									break
+								else:
+									break
+							else:
+								pass
+						else:
+							list_w_tracker[1] = 0
 
 						# pintamos el cuadradico de la deteccion
 						cv2.rectangle( \
@@ -253,6 +286,10 @@ def main():
 					(0, 255, 0), \
 					1 \
 				)
+
+				# pintamos los cuadradicos de conteo
+				for cuadradico in counting_areas:
+					cv2.rectangle(img, (cuadradico[0], cuadradico[1]), (cuadradico[2], cuadradico[3]), (0, 0, 255), 2)
 
 				# sacamos imagen a la ventana
 				cv2.imshow('sth...', img)
