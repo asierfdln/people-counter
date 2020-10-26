@@ -30,7 +30,7 @@ def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800
 def main():
 
 	# dimensiones de la ventana Y de las imagenes a capturar por la
-	# camara (TODO con argparse plz...)
+	# camara (TODO con argparse plz Y CUIDADO CON EL SYS.ARGV DE LA NET...)
 	WIDTH = 800
 	HEIGHT = 600
 
@@ -82,8 +82,14 @@ def main():
 				# dlib luego quiere las imagenes en rgb
 				img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-				# zona del bucle para las detecciones 
+				# zona del bucle para las detecciones (TODO multiprocessing
+				# para if y else a la vez???, pensar un poco...),
+				# esto hay que cambiar para que sea 1 de cada X 
+				# frames, es decir, entra a hacer detecciones cuando eso
+				# (lo de ahora es para las pruebas de los videos)
 
+				# TODO mmmmmmmmmh??
+				# if contador_frames % FRAMES_DETECT == 0 or contador_frames == 0 or redo_detection:
 				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
 
 					# reseteamos el flag de darle a la tecla R de "refresh"
@@ -96,6 +102,23 @@ def main():
 								  # 
 								  # TODO RENDIMIENTO medir tb tiempo de creacion de dos trackers y
 								  # la comparacion...
+								  #
+								  # la estrategia si que merece por eso de que si tienes detectada
+								  # ya una botella y de repente desaparece porque no se detecta
+								  # en el siguiente frame, a lo mejor hay que idea un sistema de
+								  # confirmacion de frame a frame para no perder trackers ahi a lo
+								  # loco a nada que se le vaya la pinza al modelo una vez detectada
+								  # la wea, piensa en un sistema de puntos tipo si en el siguiente
+								  # frame no se detecta eso de nuevo pues le restas un punto y asi
+								  # hasta llegar a cero en cuyo caso quitas el tracker fijo, ten en
+								  # cuenta que esto tb va a aumentar el numero de detecciones
+								  # erroneas que puedan fuckear todo el programa (puntos en funcion
+								  # de confianza con la que se detecta el bisho puede ser interesante...)
+								  #
+								  # frecuencia con la que pasas los frames por el net.Detect() tb
+								  # influye, mas freq mas puntos y menos freq menos puntos??
+								  #
+								  # mirar en el video de cProfile como medir tiempo
 
 					# convierte la imagen en formato opencv (BGR unit8) a RGBA float32
 					img_rgba = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA).astype(np.float32)
