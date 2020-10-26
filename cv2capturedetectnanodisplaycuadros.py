@@ -1,6 +1,6 @@
 
-# comando de botellas -> python3 cv2capturedetectnanodisplay.py --network=coco-bottle
-# comando de personas -> python3 cv2capturedetectnanodisplay.py --network=multiped
+# comando de botellas -> python3 cv2capturedetectnanodisplaycuadros.py --network=coco-bottle
+# comando de personas -> python3 cv2capturedetectnanodisplaycuadros.py --network=multiped
 
 import cv2
 import dlib
@@ -34,9 +34,9 @@ def detection_in_area(counting_area, rect_of_detection):
 	x_of_detection = (rect_of_detection[2] - rect_of_detection[0]) / 2
 	y_of_detection = (rect_of_detection[3] - rect_of_detection[1]) / 2
 
-	if (x_of_detection >= counting_area[0] and x_of_detection <= counting_area[2])
+	if ((x_of_detection >= counting_area[0] and x_of_detection <= counting_area[2])
 		and
-	   (y_of_detection >= counting_area[1] and y_of_detection <= counting_area[3]):
+	   (y_of_detection >= counting_area[1] and y_of_detection <= counting_area[3])):
 
 		return True
 
@@ -82,10 +82,6 @@ def main():
 	contador_frames = 0
 	FRAMES_DETECT = 50
 
-	# contadores de padonde van las cosis
-	contador_yendo_derecha = 0
-	contador_yendo_izquierda = 0
-
 	# el modelo a cargar por defecto, poner en consola "--network={algo}"
 	# para sobreescribir a ssd-mobilenet-v2
 	net = jetson.inference.detectNet('ssd-mobilenet-v2', sys.argv, 0.99)
@@ -105,7 +101,7 @@ def main():
 	# TODO cap.capture, imshow y con raton/teclado definir zonas...
 
 	# lista de areas [arribaizqx, arribaizqy, debajodchax, debajodchay, contador_detecciones_in] en las que contar peoples
-	counting_areas = [[10, 10, 60, 60, 0]]
+	counting_areas = [[50, 50, 220, 220, 0]]
 
 	# constante a utilizar para el conteo de detecciones en las diferentes zonas
 	NUM_OF_COUNTING_AREAS_plusone = len(counting_areas) + 1
@@ -130,6 +126,8 @@ def main():
 
 				# zona del bucle para las detecciones 
 
+				# TODO mmmmmmmmmh??
+				# if contador_frames % FRAMES_DETECT == 0 or contador_frames == 0 or redo_detection:
 				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
 
 					# reseteamos el flag de darle a la tecla R de "refresh"
@@ -189,7 +187,7 @@ def main():
 						list_w_tracker.append(tracker)
 
 						# asignamos al tracker una de las zonas de interes (o fuera, 0)
-						number_of_zone = zone_explorer(counting_areas, rect_dlib)
+						number_of_zone = zone_explorer(counting_areas, rectangle)
 						list_w_tracker.append(number_of_zone)
 
 						# lista con las listas de los trackers
@@ -252,44 +250,43 @@ def main():
 						)
 
 				# MUCHO TEXTO
-				cv2.putText( \
+				# cv2.putText( \
 
-					# imagen sobre la que pintar
-					img, \
+				# 	# imagen sobre la que pintar
+				# 	img, \
 
-					# texto
-					f'Hacia la izquierda -> {contador_yendo_izquierda}', \
+				# 	# texto
+				# 	f'Hacia la izquierda -> {contador_yendo_izquierda}', \
 
-					# posicion del texto
-					(0, 30), \
+				# 	# posicion del texto
+				# 	(0, 30), \
 
-					# fuente
-					cv2.FONT_HERSHEY_SIMPLEX, \
+				# 	# fuente
+				# 	cv2.FONT_HERSHEY_SIMPLEX, \
 
-					# tamaño letra
-					1.25, \
+				# 	# tamaño letra
+				# 	1.25, \
 
-					# color BGR
-					(0, 255, 0), \
+				# 	# color BGR
+				# 	(0, 255, 0), \
 
-					# grosor linea
-					1 \
-				)
+				# 	# grosor linea
+				# 	1 \
+				# )
 
-				# MUCHO TEXTO
-				cv2.putText( \
-					img, \
-					f'Hacia la derecha -> {contador_yendo_derecha}', \
-					(0, 65), \
-					cv2.FONT_HERSHEY_SIMPLEX, \
-					1.25, \
-					(0, 255, 0), \
-					1 \
-				)
 
 				# pintamos los cuadradicos de conteo
 				for cuadradico in counting_areas:
 					cv2.rectangle(img, (cuadradico[0], cuadradico[1]), (cuadradico[2], cuadradico[3]), (0, 0, 255), 2)
+					cv2.putText(
+						img,
+						f'Count: {cuadradico[4]}',
+						(cuadradico[0], cuadradico[1] - 15),
+						cv2.FONT_HERSHEY_SIMPLEX,
+						0.65,
+						(0, 0, 255),
+						2
+					)
 
 				# sacamos imagen a la ventana
 				cv2.imshow('sth...', img)
@@ -303,8 +300,8 @@ def main():
 
 			# para resetear los contadores pulsar 'a' (de "again"...)
 			elif keyCode == ord('a'):
-				contador_yendo_izquierda = 0
-				contador_yendo_derecha = 0
+				for cuadradico in counting_areas:
+					cuadradico[4] = 0
 
 			# para resetear detecciones de forma manual pulsar 'r' (de "refresh"...)
 			elif keyCode == ord('r'):
