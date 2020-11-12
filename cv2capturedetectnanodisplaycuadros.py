@@ -31,8 +31,8 @@ def gstreamer_pipeline (capture_width=800, capture_height=600, display_width=800
 def detection_in_area(counting_area, rect_of_detection):
 
 	# centro de la deteccion
-	x_of_detection = (rect_of_detection[2] - rect_of_detection[0]) / 2
-	y_of_detection = (rect_of_detection[3] - rect_of_detection[1]) / 2
+	x_of_detection = rect_of_detection[0] + (rect_of_detection[2] - rect_of_detection[0]) / 2
+	y_of_detection = rect_of_detection[1] + (rect_of_detection[3] - rect_of_detection[1]) / 2
 
 	if ((x_of_detection >= counting_area[0] and x_of_detection <= counting_area[2])
 		and
