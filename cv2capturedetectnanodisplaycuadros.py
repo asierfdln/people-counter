@@ -88,20 +88,23 @@ def main():
 
 	# camara de opencv
 	cap = cv2.VideoCapture( \
-		gstreamer_pipeline( \
-			capture_width=WIDTH, \
-			capture_height=HEIGHT, \
-			display_width=WIDTH, \
-			display_height=HEIGHT, \
-			flip_method=2 \
-		), \
-		cv2.CAP_GSTREAMER \
+		gstreamer_pipeline(
+			capture_width=WIDTH,
+			capture_height=HEIGHT,
+			display_width=WIDTH,
+			display_height=HEIGHT,
+			flip_method=0
+		),
+		cv2.CAP_GSTREAMER
 	)
 
 	# TODO cap.capture, imshow y con raton/teclado definir zonas...
 
 	# lista de areas [arribaizqx, arribaizqy, debajodchax, debajodchay, contador_detecciones_in] en las que contar peoples
-	counting_areas = [[50, 50, 220, 220, 0]]
+	counting_areas = [
+		[50, 50, 220, 220, 0],
+		[600, 250, 750, 350, 0],
+	]
 
 	# constante a utilizar para el conteo de detecciones en las diferentes zonas
 	NUM_OF_COUNTING_AREAS_plusone = len(counting_areas) + 1
@@ -128,7 +131,8 @@ def main():
 
 				# TODO mmmmmmmmmh??
 				# if contador_frames % FRAMES_DETECT == 0 or contador_frames == 0 or redo_detection:
-				if contador_frames % FRAMES_DETECT == 0 or redo_detection:
+				# if contador_frames % FRAMES_DETECT == 0 or redo_detection:
+				if redo_detection:
 
 					# reseteamos el flag de darle a la tecla R de "refresh"
 					redo_detection = False
@@ -159,11 +163,11 @@ def main():
 						# la imagen esta el objeto y asi contar luego las cosas de un lado
 						# palotro (-1 izquierda, 1 derecha)
 
-						rectangle = [ \
-							int(detection.Center[0] - detection.Width / 2), \
-							int(detection.Center[1] - detection.Height / 2), \
-							int(detection.Center[0] + detection.Width / 2), \
-							int(detection.Center[1] + detection.Height / 2) \
+						rectangle = [
+							int(detection.Center[0] - detection.Width / 2),
+							int(detection.Center[1] - detection.Height / 2),
+							int(detection.Center[0] + detection.Width / 2),
+							int(detection.Center[1] + detection.Height / 2)
 						]
 
 						# lista con (1) el tracker y (2) el numerillo de izq/dcha
@@ -173,11 +177,11 @@ def main():
 						tracker = dlib.correlation_tracker()
 
 						# le pasamos las esquinas del rectangulo
-						rect_dlib = dlib.rectangle( \
-							rectangle[0], \
-							rectangle[1], \
-							rectangle[2], \
-							rectangle[3] \
+						rect_dlib = dlib.rectangle(
+							rectangle[0],
+							rectangle[1],
+							rectangle[2],
+							rectangle[3]
 						)
 
 						# empesamos el trackeo
@@ -231,49 +235,48 @@ def main():
 							list_w_tracker[1] = 0
 
 						# pintamos el cuadradico de la deteccion
-						cv2.rectangle( \
+						cv2.rectangle(
 
 							# imagen sobre la que pintar
-							img, \
+							img,
 
 							# coordenadas de la esquina superior izquierda
-							(upperLeftCornerX, upperLeftCornerY), \
+							(upperLeftCornerX, upperLeftCornerY),
 
 							# coordenadas de la esquina inferior derecha
-							(lowerRightCornerX, lowerRightCornerY), \
+							(lowerRightCornerX, lowerRightCornerY),
 
 							# color BGR
-							(0, 255, 0), \
+							(0, 255, 0),
 
 							# grosor de linea
-							2 \
+							2
 						)
 
 				# MUCHO TEXTO
-				# cv2.putText( \
+				# cv2.putText(
 
 				# 	# imagen sobre la que pintar
-				# 	img, \
+				# 	img,
 
 				# 	# texto
-				# 	f'Hacia la izquierda -> {contador_yendo_izquierda}', \
+				# 	f'Hacia la izquierda -> {contador_yendo_izquierda}',
 
 				# 	# posicion del texto
-				# 	(0, 30), \
+				# 	(0, 30),
 
 				# 	# fuente
-				# 	cv2.FONT_HERSHEY_SIMPLEX, \
+				# 	cv2.FONT_HERSHEY_SIMPLEX,
 
 				# 	# tamaño letra
-				# 	1.25, \
+				# 	1.25,
 
 				# 	# color BGR
-				# 	(0, 255, 0), \
+				# 	(0, 255, 0),
 
 				# 	# grosor linea
-				# 	1 \
+				# 	1
 				# )
-
 
 				# pintamos los cuadradicos de conteo
 				for cuadradico in counting_areas:

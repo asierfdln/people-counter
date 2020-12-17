@@ -1,0 +1,24 @@
+ The file is formatted as a gzipped tar file with a naming convention like 20190514-175338-623c_epoch_30.0.tar.gz. I expanded the file (tar xzvf) into a "sign-language-model" directory on my Nano. The Nano development kit includes working source code for file recognition as well as live camera recognition using Caffe models created by DIGITS. You can find the code and instructions on GitHub here.
+
+All I needed to do was pass a few parameters to the live camera recognition program (imagenet-camera) in order to load the downloaded machine learning model. 
+
+
+NET=sign-language-model
+~/jetson-inference/build/aarch64/bin/imagenet-console [input-file && output-file] --prototxt=$NET/deploy.prototxt --model=$NET/snapshot_iter_15300.caffemodel --labels=$NET/labels.txt --input_blob=data --output_blob=softmax
+
+
+#############################################
+
+PARA LA DETECNET DESDE CERO DE DIGITS VA ASÍN
+
+#############################################
+
+NET=~/cocochair
+~/jetson-inference/build/aarch64/bin/./detectnet-console [input-file && output-file] --prototxt=$NET/deploy.prototxt --model=$NET/snapshot_iter_[LAQUESEA].caffemodel --input_blob=data --output_cvg=coverage --output_bbox=bboxes
+
+
+#############################################
+
+OJO QUE HAY QUE ELIMINAR LA CAPA DE CLUSTER (LA ÚLTIMA) EN EL DEPLOY.PROTOTXT
+
+#############################################

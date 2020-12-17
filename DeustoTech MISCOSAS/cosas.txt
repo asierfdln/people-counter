@@ -1,0 +1,36 @@
+https://wiki.dbpedia.org/develop/datasets
+https://github.com/NVIDIA/DIGITS/blob/master/examples/object-detection/README.md
+https://github.com/NVIDIA/DIGITS/blob/master/examples/weight-init/README.md
+
+
+
+	####### PACUANDOGRÁFICA #######
+
+creación del modelo de 12 clases en vez de 1000 (bueno, esto es un poco meh...)
+	https://github.com/dusty-nv/jetson-inference/blob/master/docs/imagenet-training.md#creating-image-classification-model-with-digits
+
+crear un detectnet model desde cero (esperar a que termine de entrenar el modelo, MIRAR EN NOTAS.2 SI ES QUE ACABA...)
+	https://github.com/dusty-nv/jetson-inference/blob/master/docs/detectnet-training.md#testing-detectnet-model-inference-in-digits
+
+parte de Semantic Segmentation
+	https://github.com/dusty-nv/jetson-inference/blob/master/docs/segnet-dataset.md
+
+
+
+	####### DÍA A DÍA #######
+
+ - CÓMO HACE LO DE DOS MODELOS A LA VEZ??
+	https://github.com/nickbild/shaides (y el de la seguridad tb es interesante...)
+
+
+
+	####### NOTAS #######
+
+  1.- para convertir de MS-COCO object classes a KITTI format (el de DIGITS) existe un rico script 
+  llamado coco2kitti.py dentro de jetson-inference/tools (creo, https://github.com/dusty-nv/jetson-inference/blob/master/docs/detectnet-training.md#downloading-the-detection-dataset )
+
+  2.- x11vnc(algo)
+
+  3.- gst-launch-1.0 nvarguscamerasrc sensor_mode=0 ! nvoverlaysink
+
+  4.- gst-launch-1.0 nvarguscamerasrc sensor_mode=0 ! 'video/x-raw(memory:NVMM),width=3820, height=2464, framerate=21/1, format=NV12' ! nvvidconv flip-method=0 ! 'video/x-raw,width=960, height=616' ! nvvidconv ! nvegltransform ! nveglglessink -e

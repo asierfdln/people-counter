@@ -1,0 +1,63 @@
+#
+# OBJECT DETECTION
+#
+function download_pednet()
+{
+	echo "$LOG Downloading PedNet..."
+	download_archive "ped-100.tar.gz" "https://nvidia.box.com/shared/static/0wbxo6lmxfamm1dk90l8uewmmbpbcffb.gz" 
+}
+
+function download_multiped()
+{
+	echo "$LOG Downloading MultiPed..."
+	download_archive "multiped-500.tar.gz" "https://nvidia.box.com/shared/static/r3bq08qh7zb0ap2lf4ysjujdx64j8ofw.gz" 
+}
+
+function download_facenet()
+{
+	echo "$LOG Downloading FaceNet..."
+	download_archive "facenet-120.tar.gz" "https://nvidia.box.com/shared/static/wjitc00ef8j6shjilffibm6r2xxcpigz.gz" 
+}
+
+function download_detectnet_coco_dog()
+{
+	echo "$LOG Downloading DetectNet-COCO-Dog..."
+	download_archive "DetectNet-COCO-Dog.tar.gz" "https://nvidia.box.com/shared/static/3qdg3z5qvl8iwjlds6bw7bwi2laloytu.gz" 
+}
+
+function download_detectnet_coco_chair()
+{
+	echo "$LOG Downloading DetectNet-COCO-Chair..."
+	download_archive "DetectNet-COCO-Chair.tar.gz" "https://nvidia.box.com/shared/static/fq0m0en5mmssiizhs9nxw3xtwgnoltf2.gz" 
+}
+
+function download_detectnet_coco_bottle()
+{
+	echo "$LOG Downloading DetectNet-COCO-Bottle..."
+	download_archive "DetectNet-COCO-Bottle.tar.gz" "https://nvidia.box.com/shared/static/8bhm91o9yldpf97dcz5d0welgmjy7ucw.gz" 
+}
+
+function download_detectnet_coco_airplane()
+{
+	echo "$LOG Downloading DetectNet-COCO-Airplane..."
+	download_archive "DetectNet-COCO-Airplane.tar.gz" "https://nvidia.box.com/shared/static/xi71hlsht5b0y66loeg73rxfa73q561s.gz" 
+}
+
+function download_ssd_mobilenet_v1()
+{
+	echo "$LOG Downloading SSD-Mobilenet-v1..."
+	download_archive "SSD-Mobilenet-v1.tar.gz" "https://nvidia.box.com/shared/static/0pg3xi9opwio65df14rdgrtw40ivbk1o.gz" 
+}
+
+function download_ssd_mobilenet_v2()
+{
+	echo "$LOG Downloading SSD-Mobilenet-v2..."
+	download_archive "SSD-Mobilenet-v2.tar.gz" "https://nvidia.box.com/shared/static/jcdewxep8vamzm71zajcovza938lygre.gz" 
+}
+
+function download_ssd_inception_v2()
+{
+	echo "$LOG Downloading SSD-Inception-v2..."
+	download_archive "SSD-Inception-v2.tar.gz" "https://nvidia.box.com/shared/static/mjq1cel6r5mdk94yb9o6v4nj8gxzlflr.gz" 
+}
+
